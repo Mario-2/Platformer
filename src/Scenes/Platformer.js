@@ -193,8 +193,9 @@ class Platformer extends Phaser.Scene {
             if(this.dashing) {
                 this.dashing = false;
                 my.sprite.player.body.setAllowGravity(true);
-                my.sprite.player.body.velocity.x = this.DASH_SPEED * this.dash_dir;
+                my.sprite.player.body.setVelocityX(this.DASH_SPEED * this.dash_dir);
             }
+            my.sprite.player.body.setDragX(0);
             this.dash = true;
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
             this.sound.play("jump", {
