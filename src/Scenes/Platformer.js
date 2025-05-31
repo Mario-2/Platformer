@@ -48,6 +48,7 @@ class Platformer extends Phaser.Scene {
             collides: true
         });
 
+
         // set up player avatar
         this.playerLayer = this.map.getObjectLayer("Player");
         my.sprite.player = this.physics.add.sprite(this.playerLayer.objects[0].x * 2, this.playerLayer.objects[0].y * 2, "platformer_characters", "tile_0000.png").setScale(SCALE)
@@ -60,8 +61,19 @@ class Platformer extends Phaser.Scene {
         my.sprite.goal.setFlip(true, false);
         this.physics.add.collider(my.sprite.player, my.sprite.goal, _ => this.win());
 
+        let oneWayCollisionProcess = (obj1, obj2) => {
+            if (obj2.properties.oneway && (obj1.y + my.sprite.player.height) > (obj2.y * obj2.height * 2)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        let propertyCollider = (obj1, obj2) => {
+        }
+
         // Enable collision handling
-        this.physics.add.collider(my.sprite.player, this.groundLayer);
+        this.physics.add.collider(my.sprite.player, this.groundLayer, propertyCollider, oneWayCollisionProcess);
 
         this.cameras.main.startFollow(my.sprite.player);
 
@@ -79,6 +91,18 @@ class Platformer extends Phaser.Scene {
         }, this);
 
         this.shift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+
+        my.sprite.walking = this.add.particles(0, 0, "kenny-particles", {
+            frame: ['smoke_03.png', 'smoke_09.png'],
+            // random: true,
+            scale: {start: 0.01, end: 0.1},
+            //maxAliveParticles: 8,
+            lifespan: 350,
+            gravityY: -400,
+            alpha: {start: 1, end: 0.1}, 
+        });
+
+        my.sprite.walking.stop();
 
     }
 
@@ -142,6 +166,10 @@ class Platformer extends Phaser.Scene {
             
             my.sprite.player.resetFlip();
             my.sprite.player.anims.play('walk', true);
+            my.sprite.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-10, my.sprite.player.displayHeight/2-5, false);
+
+            my.sprite.walking.setParticleSpeed(50, 0);
+            my.sprite.walking.start();
 
         } else if(cursors.right.isDown) {
             if(my.sprite.player.body.velocity.x < this.MOVE_SPEED)
@@ -159,6 +187,10 @@ class Platformer extends Phaser.Scene {
 
             my.sprite.player.setFlip(true, false);
             my.sprite.player.anims.play('walk', true);
+            my.sprite.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-40, my.sprite.player.displayHeight/2-5, false);
+
+            my.sprite.walking.setParticleSpeed(50, 0);
+            my.sprite.walking.start();
 
         } else {
             my.sprite.player.body.setAccelerationX(0);
@@ -170,6 +202,7 @@ class Platformer extends Phaser.Scene {
             }
 
             my.sprite.player.anims.play('idle');
+            my.sprite.walking.stop();
         }
         }
 
@@ -181,6 +214,7 @@ class Platformer extends Phaser.Scene {
         // player jump
         // note that we need body.blocked rather than body.touching b/c the former applies to tilemap tiles and the latter to the "ground"
         if(!my.sprite.player.body.blocked.down) {
+            my.sprite.walking.stop();
             my.sprite.player.anims.play('jump');
             if(my.sprite.player.body.y  > 2000) {
                 this.sound.play("lose", {
